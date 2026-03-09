@@ -19,6 +19,15 @@ class QuizViewModel: ObservableObject {
     @Published var questions: [TriviaQuestion] = []
     @Published var isLoading = false
     @Published var errorMessage: String? = nil
+    @Published var currentIndex = 0
+    @Published var score = 0
+    @Published var selectedAnswer: String? = nil
+    @Published var quizFinished = false
+    
+    var currentQuestion: TriviaQuestion? {
+        guard currentIndex < questions.count else { return nil }
+        return questions[currentIndex]
+    }
     
     func fetchQuestions() {
         isLoading = true
@@ -39,6 +48,30 @@ class QuizViewModel: ObservableObject {
                 }
             }
         }.resume()
+    }
+    
+    func selectAnswer(_ answer: String) {
+        selectedAnswer = answer
+        if answer == currentQuestion?.correct_answer {
+            score += 1
+        }
+    }
+    
+    func nextQuestion() {
+        if currentIndex + 1 < questions.count {
+            currentIndex += 1
+            selectedAnswer = nil
+        } else {
+            quizFinished = true
+        }
+    }
+    
+    func restart() {
+        currentIndex = 0
+        score = 0
+        selectedAnswer = nil
+        quizFinished = false
+        fetchQuestions()
     }
 }
 
@@ -66,16 +99,74 @@ struct ContentView: View {
                     .cornerRadius(10)
                 }
                 .padding()
-            } else {
-                Text("Pop Quiz")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-                Text("\(viewModel.questions.count) frågor hämtade")
-                    .foregroundColor(.gray)
+            } else if let question = viewModel.currentQuestion {
+                VStack(spacing: 20) {
+                    Text("Fråga \(viewModel.currentIndex + 1) av \(viewModel.questions.count)")
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                    
+                    Text(question.question)
+                        .font(.title3)
+                        .fontWeight(.semibold)
+                        .multilineTextAlignment(.center)
+                        .padding()
+                    
+                    ForEach(question.allAnswers, id: \.self) { answer in
+                        Button(action: {
+                            if viewModel.selectedAnswer == nil {
+                                viewModel.selectAnswer(answer)
+                            }
+                        }) {
+                            HStack {
+                                Text(answer)
+                                Spacer()
+                                if let selected = viewModel.selectedAnswer {
+                                    if answer == question.correct_answer {
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .foregroundColor(.green)
+                                    } else if answer == selected {
+                                        Image(systemName: "xmark.circle.fill")
+                                            .foregroundColor(.red)
+                                    }
+                                }
+                            }
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                            .background(answerColor(answer: answer, question: question))
+                            .cornerRadius(10)
+                        }
+                        .foregroundColor(.primary)
+                        .disabled(viewModel.selectedAnswer != nil)
+                    }
+                    .padding(.horizontal)
+                    
+                    if viewModel.selectedAnswer != nil {
+                        Button(viewModel.currentIndex + 1 == viewModel.questions.count ? "Se resultat" : "Nästa fråga") {
+                            viewModel.nextQuestion()
+                        }
+                        .padding()
+                        .background(Color.purple)
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
+                    }
+                }
+                .padding()
             }
         }
         .onAppear {
             viewModel.fetchQuestions()
         }
+    }
+    
+    func answerColor(answer: String, question: TriviaQuestion) -> Color {
+        guard let selected = viewModel.selectedAnswer else {
+            return Color(.systemGray6)
+        }
+        if answer == question.correct_answer {
+            return Color.green.opacity(0.2)
+        } else if answer == selected {
+            return Color.red.opacity(0.2)
+        }
+        return Color(.systemGray6)
     }
 }
