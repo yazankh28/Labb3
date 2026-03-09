@@ -46,12 +46,33 @@ struct ContentView: View {
     @StateObject var viewModel = QuizViewModel()
     
     var body: some View {
-        VStack {
-            Text("Pop Quiz")
-                .font(.largeTitle)
-                .fontWeight(.bold)
-            Text("\(viewModel.questions.count) frågor hämtade")
-                .foregroundColor(.gray)
+        VStack(spacing: 20) {
+            if viewModel.isLoading {
+                ProgressView("Laddar frågor...")
+            } else if let error = viewModel.errorMessage {
+                VStack(spacing: 16) {
+                    Text("Något gick fel")
+                        .font(.title2)
+                        .fontWeight(.bold)
+                    Text(error)
+                        .foregroundColor(.gray)
+                        .multilineTextAlignment(.center)
+                    Button("Försök igen") {
+                        viewModel.fetchQuestions()
+                    }
+                    .padding()
+                    .background(Color.purple)
+                    .foregroundColor(.white)
+                    .cornerRadius(10)
+                }
+                .padding()
+            } else {
+                Text("Pop Quiz")
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
+                Text("\(viewModel.questions.count) frågor hämtade")
+                    .foregroundColor(.gray)
+            }
         }
         .onAppear {
             viewModel.fetchQuestions()
