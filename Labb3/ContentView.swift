@@ -29,6 +29,11 @@ class QuizViewModel: ObservableObject {
         return questions[currentIndex]
     }
     
+    var progress: Double {
+        guard questions.count > 0 else { return 0 }
+        return Double(currentIndex + 1) / Double(questions.count)
+    }
+    
     func fetchQuestions() {
         isLoading = true
         errorMessage = nil
@@ -136,6 +141,10 @@ struct ContentView: View {
                     Text("Fråga \(viewModel.currentIndex + 1) av \(viewModel.questions.count)")
                         .font(.caption)
                         .foregroundColor(.gray)
+                    
+                    ProgressView(value: viewModel.progress)
+                        .accentColor(.purple)
+                        .padding(.horizontal)
                     
                     Text(question.question)
                         .font(.title3)
