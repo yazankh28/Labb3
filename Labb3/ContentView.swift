@@ -99,6 +99,38 @@ struct ContentView: View {
                     .cornerRadius(10)
                 }
                 .padding()
+            } else if viewModel.quizFinished {
+                VStack(spacing: 24) {
+                    Text(viewModel.score >= 7 ? "🏆" : viewModel.score >= 4 ? "🎉" : "😅")
+                        .font(.system(size: 80))
+                    
+                    Text("Quiz klart!")
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
+                    
+                    Text("Du fick \(viewModel.score) av \(viewModel.questions.count) rätt")
+                        .font(.title3)
+                        .foregroundColor(.gray)
+                    
+                    HStack(spacing: 20) {
+                        Label("\(viewModel.score) rätt", systemImage: "checkmark.circle.fill")
+                            .foregroundColor(.green)
+                        Label("\(viewModel.questions.count - viewModel.score) fel", systemImage: "xmark.circle.fill")
+                            .foregroundColor(.red)
+                    }
+                    .padding()
+                    .background(Color(.systemGray6))
+                    .cornerRadius(12)
+                    
+                    Button("Spela igen") {
+                        viewModel.restart()
+                    }
+                    .padding()
+                    .background(Color.purple)
+                    .foregroundColor(.white)
+                    .cornerRadius(10)
+                }
+                .padding()
             } else if let question = viewModel.currentQuestion {
                 VStack(spacing: 20) {
                     Text("Fråga \(viewModel.currentIndex + 1) av \(viewModel.questions.count)")
