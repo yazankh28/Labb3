@@ -23,7 +23,6 @@ class QuizViewModel: ObservableObject {
     @Published var score = 0
     @Published var selectedAnswer: String? = nil
     @Published var quizFinished = false
-    @Published var quizStarted = false
     
     var currentQuestion: TriviaQuestion? {
         guard currentIndex < questions.count else { return nil }
@@ -77,38 +76,17 @@ class QuizViewModel: ObservableObject {
         score = 0
         selectedAnswer = nil
         quizFinished = false
-        quizStarted = false
+        fetchQuestions()
     }
 }
+
 
 struct ContentView: View {
     @StateObject var viewModel = QuizViewModel()
     
     var body: some View {
         VStack(spacing: 20) {
-            if !viewModel.quizStarted {
-                Spacer()
-                Text("🧠")
-                    .font(.system(size: 100))
-                Text("Pop Quiz")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-                Text("Testa dina kunskaper!")
-                    .foregroundColor(.gray)
-                Spacer()
-                Button("Starta Quiz") {
-                    viewModel.quizStarted = true
-                    viewModel.fetchQuestions()
-                }
-                .font(.headline)
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(Color.purple)
-                .cornerRadius(12)
-                .padding(.horizontal, 40)
-                .padding(.bottom, 50)
-            } else if viewModel.isLoading {
+            if viewModel.isLoading {
                 ProgressView("Laddar frågor...")
             } else if let error = viewModel.errorMessage {
                 VStack(spacing: 16) {
@@ -131,12 +109,15 @@ struct ContentView: View {
                 VStack(spacing: 24) {
                     Text(viewModel.score >= 7 ? "🏆" : viewModel.score >= 4 ? "🎉" : "😅")
                         .font(.system(size: 80))
+                    
                     Text("Quiz klart!")
                         .font(.largeTitle)
                         .fontWeight(.bold)
+                    
                     Text("Du fick \(viewModel.score) av \(viewModel.questions.count) rätt")
                         .font(.title3)
                         .foregroundColor(.gray)
+                    
                     HStack(spacing: 20) {
                         Label("\(viewModel.score) rätt", systemImage: "checkmark.circle.fill")
                             .foregroundColor(.green)
@@ -146,6 +127,7 @@ struct ContentView: View {
                     .padding()
                     .background(Color(.systemGray6))
                     .cornerRadius(12)
+                    
                     Button("Spela igen") {
                         viewModel.restart()
                     }
@@ -160,14 +142,17 @@ struct ContentView: View {
                     Text("Fråga \(viewModel.currentIndex + 1) av \(viewModel.questions.count)")
                         .font(.caption)
                         .foregroundColor(.gray)
+                    
                     ProgressView(value: viewModel.progress)
                         .accentColor(.purple)
                         .padding(.horizontal)
+                    
                     Text(question.question)
                         .font(.title3)
                         .fontWeight(.semibold)
                         .multilineTextAlignment(.center)
                         .padding()
+                    
                     ForEach(question.allAnswers, id: \.self) { answer in
                         Button(action: {
                             if viewModel.selectedAnswer == nil {
@@ -196,6 +181,7 @@ struct ContentView: View {
                         .disabled(viewModel.selectedAnswer != nil)
                     }
                     .padding(.horizontal)
+                    
                     if viewModel.selectedAnswer != nil {
                         Button(viewModel.currentIndex + 1 == viewModel.questions.count ? "Se resultat" : "Nästa fråga") {
                             viewModel.nextQuestion()
@@ -208,6 +194,9 @@ struct ContentView: View {
                 }
                 .padding()
             }
+        }
+        .onAppear {
+            viewModel.fetchQuestions()
         }
     }
     
